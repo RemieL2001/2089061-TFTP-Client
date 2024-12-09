@@ -105,7 +105,7 @@ def put_file(filename, mode):
                 if block_number == 0:
                     send_wrq(filename, mode)
                 else:
-                    file.seek((block_number - 1) * BLOCK_SIZE)
+                    file.seek((block_number - 1) * BLOCK_SIZE)    #해당 블록으로 이동
                     data_to_send = file.read(BLOCK_SIZE)
                     send_data(block_number, data_to_send, server_new_socket)
                 continue
