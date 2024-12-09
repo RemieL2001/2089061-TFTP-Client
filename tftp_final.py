@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-'''
+''’
 사용법
-python tftp_final.py ip주소[-p 포트번호] (get / put) 파일이름
+python tftp_final.py ip주소 [-p 포트번호] (get/put) 파일이름
 '''
 import os
 import sys
@@ -13,7 +13,7 @@ import time
 DEFAULT_PORT = 69
 BLOCK_SIZE = 512     #블록 사이즈
 DEFAULT_TRANSFER_MODE = 'octet'
-TIMEOUT = 5
+TIMEOUT = 5    
 
 OPCODE = {'RRQ': 1, 'WRQ': 2, 'DATA': 3, 'ACK': 4, 'ERROR': 5}
 MODE = {'netascii': 1, 'octet': 2, 'mail': 3}
@@ -44,7 +44,8 @@ def send_ack(seq_num, server):
     ack_message = pack(format, OPCODE['ACK'], seq_num)
     sock.sendto(ack_message, server)
 
-def receive_with_timeout(sock, bufsize):
+#지정된 시간 내 응답이 없으면 timeout
+def receive_with_timeout(sock, bufsize): 
     sock.settimeout(TIMEOUT)
     try:
         return sock.recvfrom(bufsize)
@@ -55,14 +56,14 @@ def receive_with_timeout(sock, bufsize):
 def get_file(filename, mode):
     send_rrq(filename, mode)
     with open(filename, 'wb') as file:
-        expected_block_number = 1
+        expected_block_number = 1	
         retries = 0
         while retries < 3:
             data, server_new_socket = receive_with_timeout(sock, 516)
-            if data is None:
+            if data is None:	#timeout 발생 시
                 print("Timeout occurred. Retrying...")
                 retries += 1
-                send_rrq(filename, mode)
+                send_rrq(filename, mode)	#rrq 재전송
                 continue
 
             retries = 0
@@ -73,7 +74,7 @@ def get_file(filename, mode):
                     send_ack(block_number, server_new_socket)
                     file_block = data[4:]
                     file.write(file_block)
-                    expected_block_number += 1
+                    expected_block_number += 1	#다음 블록 번호 증가
                     print(f"Received block {block_number}")
                 else:
                     send_ack(block_number, server_new_socket)
@@ -90,7 +91,7 @@ def get_file(filename, mode):
                 return False
         print("다운로드에 실패했습니다.")
         return False
-
+        
 #파일 업로드
 def put_file(filename, mode):
     send_wrq(filename, mode)
@@ -99,13 +100,14 @@ def put_file(filename, mode):
         retries = 0
         while retries < 3:
             data, server_new_socket = receive_with_timeout(sock, 516)
+            #타임아웃 발생시
             if data is None:
                 print("Timeout occurred. Retrying...")
                 retries += 1
                 if block_number == 0:
                     send_wrq(filename, mode)
                 else:
-                    file.seek((block_number - 1) * BLOCK_SIZE)    #해당 블록으로 이동
+                    file.seek((block_number - 1) * BLOCK_SIZE)	#해당 블록 위치로 이동
                     data_to_send = file.read(BLOCK_SIZE)
                     send_data(block_number, data_to_send, server_new_socket)
                 continue
