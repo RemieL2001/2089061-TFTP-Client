@@ -44,7 +44,7 @@ def send_ack(seq_num, server):
     ack_message = pack(format, OPCODE['ACK'], seq_num)
     sock.sendto(ack_message, server)
 
-#지정된 시간 내 응답이 없으면 타임아웃웃
+#지정된 시간 내 응답이 없으면 타임아웃
 def receive_with_timeout(sock, bufsize): 
     sock.settimeout(TIMEOUT)
     try:
